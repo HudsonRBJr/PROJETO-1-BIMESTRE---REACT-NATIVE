@@ -1,32 +1,78 @@
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
-import { TextInput, Button, Title, HelperText } from 'react-native-paper';
+import {
+    KeyboardAvoidingView,
+    Platform,
+    StyleSheet,
+    View,
+    TouchableOpacity,
+    Keyboard,
+} from 'react-native';
+import {
+    TextInput,
+    Button,
+    Title,
+    HelperText,
+    Menu,
+    Divider,
+} from 'react-native-paper';
 import { saveData } from '../utils/storage';
 
-// função de validação de CPF
+// Validação CPF (algoritmo)
 const isValidCPF = (cpf) => {
-    cpf = cpf.replace(/[^\d]+/g, '');
-    if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
+    const cleaned = cpf.replace(/[^\d]+/g, '');
+    if (cleaned.length !== 11 || /^(\d)\1+$/.test(cleaned)) return false;
 
     let soma = 0;
-    for (let i = 0; i < 9; i++) soma += parseInt(cpf.charAt(i)) * (10 - i);
+    for (let i = 0; i < 9; i++) soma += parseInt(cleaned.charAt(i), 10) * (10 - i);
     let resto = (soma * 10) % 11;
     if (resto === 10 || resto === 11) resto = 0;
-    if (resto !== parseInt(cpf.charAt(9))) return false;
+    if (resto !== parseInt(cleaned.charAt(9), 10)) return false;
 
     soma = 0;
-    for (let i = 0; i < 10; i++) soma += parseInt(cpf.charAt(i)) * (11 - i);
+    for (let i = 0; i < 10; i++) soma += parseInt(cleaned.charAt(i), 10) * (11 - i);
     resto = (soma * 10) % 11;
     if (resto === 10 || resto === 11) resto = 0;
-    if (resto !== parseInt(cpf.charAt(10))) return false;
+    if (resto !== parseInt(cleaned.charAt(10), 10)) return false;
 
     return true;
 };
 
-// função de validação de telefone brasileiro simples
+// Máscara CPF: 999.999.999-99
+const formatCPF = (value) => {
+    const d = value.replace(/\D/g, '').slice(0, 11);
+    let r = d;
+    r = r.replace(/(\d{3})(\d)/, '$1.$2');
+    r = r.replace(/(\d{3})(\d)/, '$1.$2');
+    r = r.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    return r;
+};
+
+// Máscara de celular/telefone: (99) 99999-9999 ou (99) 9999-9999
+const formatPhone = (value) => {
+    const d = value.replace(/\D/g, '').slice(0, 11);
+    if (d.length === 0) return '';
+    if (d.length <= 2) return `(${d}`;
+    if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+};
+
+// Validação de telefone celular/DDD: aceita 10 ou 11 dígitos.
 const isValidPhone = (phone) => {
-    const cleaned = phone.replace(/\D/g, ''); // só números
-    return cleaned.length >= 10 && cleaned.length <= 11;
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.length === 10) {
+        return /^[1-9]\d{1}\d{8}$/.test(cleaned);
+    }
+    if (cleaned.length === 11) {
+        return /^[1-9]\d{1}9\d{8}$/.test(cleaned);
+    }
+    return false;
+};
+
+// Validação de e-mail simples
+const isValidEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(email).toLowerCase());
 };
 
 export default function RegisterScreen({ navigation }) {
@@ -35,23 +81,34 @@ export default function RegisterScreen({ navigation }) {
     const [cpf, setCpf] = useState('');
     const [email, setEmail] = useState('');
     const [course, setCourse] = useState('');
+    const [password, setPassword] = useState('');
 
     const [errors, setErrors] = useState({});
+    const [menuVisible, setMenuVisible] = useState(false);
+
+    const openMenu = () => setMenuVisible(true);
+    const closeMenu = () => setMenuVisible(false);
+
+    const handleSelectCourse = (c) => {
+        setCourse(c);
+        if (errors.course) setErrors((s) => ({ ...s, course: null }));
+        closeMenu();
+    };
 
     const handleSave = async () => {
         const newErrors = {};
 
         if (!name.trim()) newErrors.name = 'Nome é obrigatório';
-        if (!isValidPhone(phone)) newErrors.phone = 'Telefone inválido';
+        if (!isValidPhone(phone)) newErrors.phone = 'Telefone inválido (ex.: (11) 9xxxx-xxxx)';
         if (!isValidCPF(cpf)) newErrors.cpf = 'CPF inválido';
-        if (!email.includes('@')) newErrors.email = 'E-mail inválido';
-        if (!course.trim()) newErrors.course = 'Curso é obrigatório';
+        if (!isValidEmail(email)) newErrors.email = 'E-mail inválido';
+        if (!course) newErrors.course = 'Selecione um curso';
+        if (!password || password.length < 4) newErrors.password = 'Senha obrigatória (mín. 4 caracteres)';
 
         setErrors(newErrors);
-
         if (Object.keys(newErrors).length > 0) return;
 
-        const user = { name, phone, cpf, email, course };
+        const user = { name, phone, cpf, email, course, password, username: email };
         await saveData('user', user);
         navigation.navigate('Login');
     };
@@ -66,7 +123,10 @@ export default function RegisterScreen({ navigation }) {
             <TextInput
                 label="Nome"
                 value={name}
-                onChangeText={setName}
+                onChangeText={(t) => {
+                    setName(t);
+                    if (errors.name) setErrors((s) => ({ ...s, name: null }));
+                }}
                 style={styles.input}
                 error={!!errors.name}
             />
@@ -75,9 +135,28 @@ export default function RegisterScreen({ navigation }) {
             </HelperText>
 
             <TextInput
-                label="Telefone"
+                label="Senha"
+                value={password}
+                onChangeText={(t) => {
+                    setPassword(t);
+                    if (errors.password) setErrors((s) => ({ ...s, password: null }));
+                }}
+                secureTextEntry
+                style={styles.input}
+                error={!!errors.password}
+            />
+            <HelperText type="error" visible={!!errors.password}>
+                {errors.password}
+            </HelperText>
+
+            <TextInput
+                label="Telefone (celular)"
                 value={phone}
-                onChangeText={setPhone}
+                onChangeText={(t) => {
+                    const masked = formatPhone(t);
+                    setPhone(masked);
+                    if (errors.phone) setErrors((s) => ({ ...s, phone: null }));
+                }}
                 style={styles.input}
                 keyboardType="phone-pad"
                 error={!!errors.phone}
@@ -89,7 +168,11 @@ export default function RegisterScreen({ navigation }) {
             <TextInput
                 label="CPF"
                 value={cpf}
-                onChangeText={setCpf}
+                onChangeText={(t) => {
+                    const masked = formatCPF(t);
+                    setCpf(masked);
+                    if (errors.cpf) setErrors((s) => ({ ...s, cpf: null }));
+                }}
                 style={styles.input}
                 keyboardType="numeric"
                 error={!!errors.cpf}
@@ -101,27 +184,62 @@ export default function RegisterScreen({ navigation }) {
             <TextInput
                 label="E-mail"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(t) => {
+                    setEmail(t);
+                    if (errors.email) setErrors((s) => ({ ...s, email: null }));
+                }}
                 style={styles.input}
                 keyboardType="email-address"
                 error={!!errors.email}
+                autoCapitalize="none"
             />
             <HelperText type="error" visible={!!errors.email}>
                 {errors.email}
             </HelperText>
 
-            <TextInput
-                label="Curso"
-                value={course}
-                onChangeText={setCourse}
-                style={styles.input}
-                error={!!errors.course}
-            />
-            <HelperText type="error" visible={!!errors.course}>
-                {errors.course}
-            </HelperText>
+            {/* Curso: agora o Menu usa o TextInput como anchor */}
+            <View style={{ marginBottom: 4 }}>
+                <Menu
+                    visible={menuVisible}
+                    onDismiss={closeMenu}
+                    anchor={
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            onPress={() => {
+                                // fechar teclado antes de abrir o menu para evitar sobreposição
+                                Keyboard.dismiss();
+                                openMenu();
+                            }}
+                        >
+                            <TextInput
+                                label="Curso"
+                                value={course}
+                                style={[styles.input, { marginBottom: 0 }]}
+                                editable={false}
+                                right={<TextInput.Icon name="menu-down" onPress={() => { Keyboard.dismiss(); openMenu(); }} />}
+                                error={!!errors.course}
+                            />
+                        </TouchableOpacity>
+                    }
+                >
+                    <Menu.Item onPress={() => handleSelectCourse('DSM')} title="DSM" />
+                    <Divider />
+                    <Menu.Item onPress={() => handleSelectCourse('ADS')} title="ADS" />
+                    <Divider />
+                    <Menu.Item onPress={() => handleSelectCourse('GRH')} title="GRH" />
+                    <Divider />
+                    <Menu.Item onPress={() => handleSelectCourse('GPI')} title="GPI" />
+                </Menu>
 
-            <Button mode="contained" onPress={handleSave}>
+                <HelperText type="info" visible={!course && !errors.course}>
+                    Toque no campo ou no ícone para escolher o curso.
+                </HelperText>
+                <HelperText type="error" visible={!!errors.course}>
+                    {errors.course}
+                </HelperText>
+            </View>
+
+            <Button mode="contained" onPress={handleSave} style={{ marginTop: 12 }}>
                 Salvar
             </Button>
         </KeyboardAvoidingView>

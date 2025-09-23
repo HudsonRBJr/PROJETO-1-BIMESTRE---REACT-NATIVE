@@ -3,7 +3,7 @@ import axios from 'axios';
 const ANILIST_URL = 'https://graphql.anilist.co';
 
 export async function searchAnime({ page = 1, perPage = 10, search = '' }) {
-    const query = `
+  const query = `
     query ($page: Int, $perPage: Int, $search: String) {
       Page(page: $page, perPage: $perPage) {
         pageInfo { total currentPage lastPage hasNextPage perPage }
@@ -13,16 +13,26 @@ export async function searchAnime({ page = 1, perPage = 10, search = '' }) {
           status
           episodes
           description(asHtml: false)
-          coverImage { large medium }
+          coverImage { extraLarge large medium color }
+          bannerImage
           averageScore
+          trailer { id site thumbnail }
+          streamingEpisodes {
+            title
+            thumbnail
+            url
+            site
+          }
         }
       }
     }
   `;
-    const variables = { page, perPage, search };
+  const variables = { page, perPage, search };
 
-    const res = await axios.post(ANILIST_URL, { query, variables }, {
-        headers: { 'Content-Type': 'application/json' }
-    });
-    return res.data.data.Page;
+  const res = await axios.post(
+    ANILIST_URL,
+    { query, variables },
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+  return res.data.data.Page;
 }
