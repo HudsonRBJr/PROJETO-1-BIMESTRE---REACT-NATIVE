@@ -1,56 +1,107 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
-import { TextInput, Button, Title } from 'react-native-paper';
+import { StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { TextInput, Button, Title, Card, Paragraph } from 'react-native-paper';
 import { loadData } from '../utils/storage';
 
 export default function LoginScreen({ navigation }) {
-    const [userField, setUserField] = useState('');
-    const [password, setPassword] = useState('');
+  const [userField, setUserField] = useState('');
+  const [password, setPassword] = useState('');
 
-    const handleLogin = async () => {
-        const stored = await loadData('user');
+  const handleLogin = async () => {
+    const stored = await loadData('user');
 
-        if (!stored) {
-            Alert.alert('Erro', 'Nenhum usuário cadastrado. Faça o cadastro primeiro.');
-            return;
-        }
+    if (!stored) {
+      Alert.alert('Erro', 'Nenhum usuário cadastrado. Faça o cadastro primeiro.');
+      return;
+    }
 
-        // Aqui estamos usando o email como "usuário"
-        if (stored.username === userField && stored.password === password) {
+          // Aqui estamos usando o email como "usuário"
+        if (stored.name === userField && stored.password === password) {
             navigation.replace('Cards');
         } else {
             Alert.alert('Erro', 'Usuário ou senha incorretos.');
         }
     };
 
-    return (
-        <View style={styles.container}>
-            <Title>Login</Title>
-            <TextInput
-                label="Usuário (email)"
-                value={userField}
-                onChangeText={setUserField}
-                style={styles.input}
-                autoCapitalize="none"
-            />
-            <TextInput
-                label="Senha"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                style={styles.input}
-            />
-            <Button mode="contained" onPress={handleLogin} style={{ marginBottom: 8 }}>
-                Entrar
-            </Button>
-            <Button mode="outlined" onPress={() => navigation.navigate('Register')}>
-                Cadastrar Usuário
-            </Button>
-        </View>
-    );
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <Card style={styles.card}>
+        <Card.Content>
+          <Title style={styles.title}>Login</Title>
+          <Paragraph style={styles.subtitle}>
+            Acesse com seu usuário e senha
+          </Paragraph>
+
+          <TextInput
+            label="Usuário (email)"
+            value={userField}
+            onChangeText={setUserField}
+            style={styles.input}
+            autoCapitalize="none"
+            mode="outlined"
+          />
+
+          <TextInput
+            label="Senha"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            style={styles.input}
+            mode="outlined"
+          />
+
+          <Button
+            mode="contained"
+            onPress={handleLogin}
+            style={styles.button}
+          >
+            Entrar
+          </Button>
+
+          <Button
+            mode="text"
+            onPress={() => navigation.navigate('Register')}
+          >
+            Cadastrar Usuário
+          </Button>
+        </Card.Content>
+      </Card>
+    </KeyboardAvoidingView>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 16, justifyContent: 'center' },
-    input: { marginBottom: 12 },
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 20,
+    backgroundColor: "#f8f9fa",
+  },
+  card: {
+    borderRadius: 16,
+    paddingVertical: 20,
+    elevation: 4,
+  },
+  title: {
+    textAlign: "center",
+    fontSize: 26,
+    marginBottom: 10,
+    fontWeight: "bold",
+  },
+  subtitle: {
+    textAlign: "center",
+    marginBottom: 20,
+    color: "#6c757d",
+  },
+  input: {
+    marginBottom: 15,
+  },
+  button: {
+    marginTop: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
 });
