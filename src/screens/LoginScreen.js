@@ -22,7 +22,7 @@ export default function LoginScreen({ navigation }) {
             Alert.alert('Erro', 'Usuário ou senha incorretos.');
         }
     };
-    
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -36,7 +36,7 @@ export default function LoginScreen({ navigation }) {
           </Paragraph>
 
           <TextInput
-            label="Usuário (email)"
+            label="Usuário (Nome)"
             value={userField}
             onChangeText={setUserField}
             style={styles.input}
