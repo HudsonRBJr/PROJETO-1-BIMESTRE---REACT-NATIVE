@@ -1,12 +1,13 @@
 # PROJETO-1-BIMESTRE---REACT-NATIVE
 
-Grupo:
-Hudson Ribeiro Barbara Junior.
+👨‍💻 Grupo: <br>
+Hudson Ribeiro Barbara Junior <br>
 Gabriel Andrade Aleixo
 
-API escolhida: anilist
+API escolhida: AniList
 
-Este projeto é um **aplicativo mobile** desenvolvido em **React Native** usando **Expo**, que consome a **Anilist API** para fornecer informações detalhadas sobre **animes e mangás**. O app exibe sinopses, pontuações, gêneros, status, imagens e muito mais, funcionando como uma ferramenta de consulta rápida para dispositivos móveis.
+Este projeto é um **aplicativo mobile** desenvolvido em **React Native** usando **Expo**, que consome a **AniList API** para fornecer informações detalhadas sobre **animes e mangás**.  
+O app exibe sinopses, pontuações, gêneros, status, imagens e muito mais, funcionando como uma ferramenta de consulta rápida para dispositivos móveis.
 
 
 
@@ -14,13 +15,14 @@ Este projeto é um **aplicativo mobile** desenvolvido em **React Native** usando
 
 ---
 
-## Funcionalidades
+## ⚙️ Funcionalidades
 
-- Buscar informações de animes e mangás por ID.
-- Exibir imagens de capa e banners.
-- Visualizar detalhes como episódios, capítulos, status e notas médias.
-- Interface mobile simples e intuitiva.
-- Preparado para integração com outras telas ou funcionalidades.
+- 🔎 Buscar informações de animes e mangás.  
+- 📖 Exibir título, imagem e dados básicos de cada anime.  
+- 👤 Criar conta com dados validados (nome, CPF, telefone, e-mail, curso e senha).  
+- 🔐 Login e autenticação de usuário.  
+- 💾 Armazenamento local com **AsyncStorage**.  
+
 
 ---
 
@@ -58,12 +60,17 @@ npm install
 # ou
 yarn install
 ```
-3. Inicie o projeto com expo:
+3. Corrija dependências nativas com o Expo:
+  ```bash
+    expo install --fix
+  ``` 
+
+4. Inicie o projeto com expo:
 ```bash
 
 npx expo start
 ```
-4. Abra o app no dispositivo ou emulador:
+5. Abra o app no dispositivo ou emulador:
 
 No celular: abra o Expo Go e escaneie o QR code.
 
@@ -98,7 +105,7 @@ PROJETO-1-BIM
 
 ```
 
-## Exeplo de Função:
+## Exemplo de Função:
 
 ###  tela de login
 A tela de login permite que o usuário insira seu nome de usuário (e-mail) e senha para acessar o aplicativo. Caso as credenciais sejam válidas, o usuário será redirecionado para a tela de Cards.
@@ -286,8 +293,56 @@ const handleLogin = async () => {
 
    ```
 
+
+## 🌐 Consumo da API AniList
+
+Na tela Cards, o projeto consome dados da AniList API via GraphQL.
+
+```bash
+query {
+  Page(perPage: 10) {
+    media(type: ANIME) {
+      id
+      title {
+        romaji
+        english
+      }
+      coverImage {
+        large
+      }
+    }
+  }
+}
+
+```
+
+## ✅ Validações Implementadas
+CPF válido (cálculo de dígitos verificadores).
+
+Telefone formatado: (XX) XXXXX-XXXX.
+
+E-mail válido.
+
+Senha mínima de 4 caracteres.
+
+
 ## Contribuições
 
 Se você deseja contribuir para este projeto, sinta-se à vontade para fazer um fork e criar um pull request. Será um prazer revisar suas contribuições!
+
+
+## Licença
+
+Este projeto está licenciado sob a **Licença MIT**.  
+
+Isso significa que você pode:  
+- Usar o código em projetos pessoais e comerciais.  
+- Modificar, distribuir e compartilhar livremente.  
+- Incorporar em outros softwares, inclusive proprietários.  
+
+A única exigência é **manter o aviso de copyright e a licença MIT** em qualquer cópia ou parte substancial do código.  
+
+> Em resumo: você pode usar, copiar e alterar como quiser, mas precisa dar os devidos créditos.
+
 
 
