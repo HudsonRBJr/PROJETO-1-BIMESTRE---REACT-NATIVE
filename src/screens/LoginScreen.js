@@ -36,7 +36,7 @@ export default function LoginScreen({ navigation }) {
           </Paragraph>
 
           <TextInput
-            label="Usuário (email)"
+            label="Usuário"
             value={userField}
             onChangeText={setUserField}
             style={styles.input}
